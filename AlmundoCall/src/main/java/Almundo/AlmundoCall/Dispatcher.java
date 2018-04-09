@@ -1,7 +1,6 @@
 package Almundo.AlmundoCall;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -47,34 +46,35 @@ public class Dispatcher implements Runnable {
 
 	}
 
-	public void dispatchCall(Call call) {
+	public synchronized void dispatchCall(Call call) {
 		System.out.println("***Numero Actual de Llamadas:" + calls.size());
 		System.out.println("***Vacio:" + calls.isEmpty());
+		Employee emp = null;
+		imprimirEmpleadosLibres();
+
+		emp = findEmployeAvailable();
+		while (emp == null) {
+			// Si llega hasta este punto es porque no encontro un empleado
+			// que
+			// pudiera atender la llamada en cuyo caso es necesario esperar
+			// a que se
+			// desocupe un empleado
+			try {
+				System.out.println(
+						"No hay empleados disponibles para atender su llamada por favor mantengase en la linea");
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		}
+		notify();
 
 		while (!calls.isEmpty()) {
-			Employee emp = null;
 
-			emp = findEmployeAvailable();
+			answer(emp, call);
 
-			if (emp == null) {
-				// Si llega hasta este punto es porque no encontro un empleado
-				// que
-				// pudiera atender la llamada en cuyo caso es necesario esperar
-				// a que se
-				// desocupe un empleado
-				try {
-					System.out.println(
-							"No hay empleados disponibles para atender su llamada por favor mantengase en la linea");
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				
-
-			} else {
-				answer(emp, call);
-			}
-			imprimirEmpleadosLibres();
+			
 		}
 		System.out.println("Despachando llamada");
 	}
@@ -97,11 +97,11 @@ public class Dispatcher implements Runnable {
 	 */
 	private synchronized Employee findbyType(TypeofEmployee type) {
 		Employee employeeFree = null;
-		
+
 		for (String key : operators.keySet()) {
-		
+
 			Employee employee = operators.get(key);
-		
+
 			if (employee.getType().equals(type)) {
 				if (employee.getState().equals(State.FREE)) {
 					System.out.println("Encontró");
@@ -152,8 +152,20 @@ public class Dispatcher implements Runnable {
 	 *            Llamada por ser contestada
 	 */
 	public synchronized void answer(Employee emp, Call currentCall) {
-		System.out.println("Call Taken " + currentCall.isTaken());
+		while(currentCall.isTaken()){
+			System.out.println("Call Taken " + currentCall.isTaken());
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
+		
 		if (!currentCall.isTaken()) {
+			
 			currentCall.setTaken(true);
 			System.out.println("Habla " + emp.getName() + " en que le puedo colaborar " + currentCall.getName());
 
@@ -169,20 +181,21 @@ public class Dispatcher implements Runnable {
 			}
 			System.out.println("Tiempo de Llamada en milisegundos>" + randomNumberofMilliSeconds);
 			System.out.println("Llamada Finalizada");
-			
-			
-				System.out.println("Removiendo " + currentCall.getName());
-				calls.remove(currentCall.getName());
-				System.out.println("Tamaño despues de remocion"+calls.size());
-				currentEmployeesBusy--;
-				Employee empToRelease=this.operators.get(emp.getName());
-				empToRelease.setState(State.FREE);
-				
-				imprimirEmpleadosLibres();
-				operators.replace(empToRelease.getName(), empToRelease);
-				imprimirLlamadas();
-			
+
+			System.out.println("Removiendo " + currentCall.getName());
+			calls.remove(currentCall.getName());
+			System.out.println("Tamaño despues de remocion" + calls.size());
+			currentEmployeesBusy--;
+			Employee empToRelease = this.operators.get(emp.getName());
+			empToRelease.setState(State.FREE);
+
+			imprimirEmpleadosLibres();
+			operators.replace(empToRelease.getName(), empToRelease);
+			notify();
+			imprimirLlamadas();
+
 		}
+	
 
 	}
 
@@ -203,21 +216,19 @@ public class Dispatcher implements Runnable {
 		this.calltoBeQueued = calltoBeQueued;
 		this.calls.put(calltoBeQueued.getName(), calltoBeQueued);
 	}
-	
-	
-	private void imprimirEmpleadosLibres(){
+
+	private void imprimirEmpleadosLibres() {
 		System.out.println("******Empleados******");
-		for (Employee e:operators.values()){
-			System.out.println("NombreEmpleado"+e.getName()+"Estatus"+e.getState());
+		for (Employee e : operators.values()) {
+			System.out.println("NombreEmpleado" + e.getName() + "Estatus" + e.getState());
 		}
-		
+
 	}
 
-	
-	private void imprimirLlamadas(){
+	private void imprimirLlamadas() {
 		System.out.println("******Llamadas******");
-		for (Call c:calls.values()){
-			System.out.println("NombreLlamada"+c.getName());
+		for (Call c : calls.values()) {
+			System.out.println("NombreLlamada" + c.getName());
 		}
 	}
 }

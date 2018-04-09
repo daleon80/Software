@@ -1,5 +1,9 @@
 package Almundo.AlmundoCall;
-
+/**
+ * 
+ * @author dleon	Daniel Leon
+ *
+ */
 public class Employee {
 	private TypeofEmployee type;
 

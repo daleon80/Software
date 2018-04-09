@@ -1,10 +1,11 @@
 package Almundo.AlmundoCall;
 
 /**
- * Hello world!
+ * Favor Utilizar la clase para probar el comportamiento global
+ * @author dleon	Daniel Leon
  *
  */
-public class App 
+public class TestMain 
 {
     public static void main( String[] args )
     {

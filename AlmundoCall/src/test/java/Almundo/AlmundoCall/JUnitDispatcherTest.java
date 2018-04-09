@@ -5,10 +5,19 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
-
+/**
+ * 
+ * @author dleon	Daniel Leon
+ *
+ */
 public class JUnitDispatcherTest {
+	
+	@Rule
+    public Timeout globalTimeout = Timeout.seconds(1000);
 	
 	 @BeforeClass
 	     public static void beforeClass() {
